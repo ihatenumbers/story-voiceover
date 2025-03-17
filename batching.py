@@ -52,12 +52,13 @@ Bob
         temperature=0.1
     )
 
-    for response in responses:
+    for i, response in enumerate(responses):
         text = response['choices'][0]['message']['content']
-        messages.append({"role": "assistant", "content": text})
+        message = messages[i]
+        message.append({"role": "assistant", "content": text})
 
         with open("dataset/main.jsonl", "a", encoding="utf-8") as f:
-            f.write(json.dumps(messages) + "\n")
+            f.write(json.dumps({"model": args.model, "filename": filename, "messages": message}) + "\n")
 
         # print("Content: ", content)
         print("Content length:", len(content), "; Words: ", len(content.split()), "; Sentences: ", len(content.split(".")), "; Paragraphs", len(content.split("\n\n")))
