@@ -25,7 +25,7 @@ def get_name_dialogues(contents):
 
 if __name__ == "__main__":
     import json
-    with open("dataset/main.jsonl", "r") as f:
+    with open("dataset/main.jsonl", "r", encoding="utf-8") as f:
         lines = f.readlines()
         for line in lines:
             data = json.loads(line)

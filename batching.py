@@ -1,8 +1,8 @@
-from litellm import completion, create_pretrained_tokenizer
+from litellm import batch_completion
 from dotenv import load_dotenv
-# from zonos_api import audio_to_text
 from pathlib import Path
 import argparse
+from extractor import get_name_dialogues
 import json
 
 load_dotenv()
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     with open(args.file, "r", encoding="utf-8") as f:
         content = f.read().strip()
     
-    messages = [{"role": "system", "content": system_prompt},
+    messages = [[{"role": "system", "content": system_prompt},
 {"role": "user", "content": """"Hello" Alice greeted Bob. And said, "How are you?"
 
 "Hi" The person smiled.
@@ -44,28 +44,23 @@ Bob
 (Bob): "Hi"
 "I'm fine"
 </extracted_dialogues_with_name>"""},
-{"role": "user", "content": content}]
+{"role": "user", "content": c.strip()}] for c in content.split("---")]
 
-    response = completion(
+    responses = batch_completion(
         model=args.model,
-        #model="deepseek/deepseek-chat",
-        #model="groq/gemma2-9b-it", 
-        #model="groq/llama-3.3-70b-versatile",
         messages=messages,
         temperature=0.1
     )
 
-    text = response['choices'][0]['message']['content']
-    messages.append({"role": "assistant", "content": text})
+    for response in responses:
+        text = response['choices'][0]['message']['content']
+        messages.append({"role": "assistant", "content": text})
 
-    with open("dataset/main.jsonl", "a", encoding="utf-8") as f:
-        f.write(json.dumps(messages) + "\n")
+        with open("dataset/main.jsonl", "a", encoding="utf-8") as f:
+            f.write(json.dumps(messages) + "\n")
 
-    # print("Content: ", content)
-    print("Content length:", len(content), "; Words: ", len(content.split()), "; Sentences: ", len(content.split(".")), "; Paragraphs", len(content.split("\n\n")))
-
-    print("\n="*3)
-
-    print("Completion text: ", text)
-    print("Prompt tokens:", response['usage']['prompt_tokens'], "; Completion tokens:", response['usage']['completion_tokens'])
-    print("Total tokens:", response['usage']['total_tokens'])
+        # print("Content: ", content)
+        print("Content length:", len(content), "; Words: ", len(content.split()), "; Sentences: ", len(content.split(".")), "; Paragraphs", len(content.split("\n\n")))
+        print("Completion text: ", get_name_dialogues(text))
+        print("Prompt tokens:", response['usage']['prompt_tokens'], "; Completion tokens:", response['usage']['completion_tokens'])
+        print("Total tokens:", response['usage']['total_tokens'], end="\n\n")
